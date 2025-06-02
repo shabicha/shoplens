@@ -1,42 +1,31 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
+@import "tailwindcss";
 
 .logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+  @apply top-0 left-10 p-6 absolute;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.uploadButton {
+  @apply top-44 left-16 p-6 absolute items-center flex justify-between h-[39px] w-[173px] pl-[30px] pr-2.5 py-1 outline-solid outline-[#2E2E2E] cursor-pointer ;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+
+
+ .uploadText {
+  @apply text-[#2E2E2E] text-xs font-normal tracking-[0] leading-[normal] relative w-fit;
+  font-family: "JetBrains Mono-Regular", Helvetica;
 }
 
-.card {
-  padding: 2em;
+.uploadLogo {
+  @apply h-[24px] relative w-[24px] ;
 }
 
-.read-the-docs {
-  color: #888;
+.Result {
+  @apply top-65 left-10 p-6 absolute text-[#2E2E2E] text-xs font-normal tracking-[0] leading-[normal] w-fit;
+    font-family: "JetBrains Mono-Regular", Helvetica;
+}
+.image {
+  @apply top-80 left-16  absolute w-50 h-50 outline-solid outline-[#2E2E2E] cursor-pointer ;
+}
+.image:hover {
+  box-shadow:12px 12px 0px #2E2E2E;
 }
