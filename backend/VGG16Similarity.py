@@ -117,9 +117,12 @@ def rank_similar_images(queryImg, links):
   results = []
   print(f"Top {top_n} matches with similarity scores:")
   for i, (image_id, score) in enumerate(zip(top_matches, top_scores)):
-      image_name = imgNames[image_id].decode('utf-8') if isinstance(imgNames[image_id], bytes) else imgNames[image_id]
+      if isinstance(imgNames[image_id], bytes):
+         image_name = imgNames[image_id].decode('utf-8') 
+      else:
+         imgNames[image_id]
       print(f"{i+1}. Image: {image_name}, Score: {score:.4f}")
-      results.append(image_name)
+      results.append([image_name, links[image_id][1]])
 
   print("Results: ", results)
   return results

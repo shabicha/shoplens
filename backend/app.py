@@ -35,7 +35,7 @@ def recommend():
         results = rank_similar_images(img_bytes, depop_links)
         print(f"Results: {results}")
 
-        return jsonify({"query": query_terms, "results": results})
+        return jsonify({"results": results})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
