@@ -1,7 +1,6 @@
 import LensLogo from '/Users/shabichasureshkumar/Desktop/shoplens/frontend/src/assets/shopLogo.svg'
-import upload from '/Users/shabichasureshkumar/Desktop/shoplens/frontend/src/assets/upload.svg'
 import './App.css'
-
+import Upload from './Upload'
 function App() {
   
 
@@ -9,15 +8,7 @@ function App() {
     <>
       
       <img className="logo" alt="Vector" src={LensLogo} />
-      <div className="uploadButton">
-
-<div className="uploadText">UPLOAD</div>
-<img
-className="uploadLogo"
-alt="Outline arrows"
-src={upload}
-/>
-</div>
+      <Upload/>
 
       <div className="Result">Results [100]</div>
       <img 

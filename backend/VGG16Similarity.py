@@ -2,11 +2,13 @@
 # VGG16 method to exctract image features
 import numpy as np
 from numpy import linalg as LA
-import depopScraper
-links = depopScraper.links  
 from tensorflow.keras.applications.vgg16 import VGG16
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.vgg16 import preprocess_input
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+
+
 
 class VGGNet:
     def __init__(self):
@@ -48,66 +50,76 @@ import requests
 from io import BytesIO
 import os
 
+def rank_similar_images(queryImg, links):
 
-model = VGGNet()
-features = []
-names = []
-for i in range(len(links)):
-  url = links[i][1]
-  name = links[i][0]
-  #fetch img
-  response = requests.get(url)
-  img = Image.open(BytesIO(response.content)).convert("RGB")
-  print("Extracting features from image - ", name)
-  vector = model.extract_feat(img)
+  model = VGGNet()
+  features = []
+  names = []
+  for i in range(len(links)):
+    url = links[i][1]
+    name = links[i][0]
+    #fetch img
+    response = requests.get(url)
+    img = Image.open(BytesIO(response.content)).convert("RGB")
+    print("Extracting features from image - ", name)
+    vector = model.extract_feat(img)
 
-  features.append(vector)
-  names.append(name)
-
-
-# directory for storing extracted features
-output = "CNNFeatures.h5"
-
-print(" writing feature extraction results to h5 file")
-
-h5f = h5py.File(output, 'w')
-h5f.create_dataset('dataset_1', data=features)
-h5f.create_dataset('dataset_2', data=np.bytes_(names))  #  np.bytes_ > np.string_
-h5f.close()
-
-#reading stuff from h5 file
-h5f = h5py.File("CNNFeatures.h5",'r')
-feats = h5f['dataset_1'][:]
-imgNames = h5f['dataset_2'][:]
-print(feats)
-print(imgNames)
-print(len(imgNames))
-
-h5f.close()
+    features.append(vector)
+    names.append(name)
 
 
+  # directory for storing extracted features
+  output = "CNNFeatures.h5"
 
-#compare image feature dataset with user inputed image, return results with >50 similairty
-queryImg = "/Users/shabichasureshkumar/Downloads/vans.jpg"
-model = VGGNet()
-query_feat = model.extract_feat(queryImg)
+  print(" writing feature extraction results to h5 file")
 
-scores = []
-from scipy import spatial
-for i in range(feats.shape[0]):
-    score = 1-spatial.distance.cosine(query_feat, feats[i])
-    scores.append(score)
-scores = np.array(scores)
-rank_ID = np.argsort(scores)[::-1]
-rank_score = scores[rank_ID]
+  h5f = h5py.File(output, 'w')
+  h5f.create_dataset('dataset_1', data=features)
+  h5f.create_dataset('dataset_2', data=np.bytes_(names))  #  np.bytes_ > np.string_
+  h5f.close()
 
-# Get top 3 matches
-top_n = 3
-top_matches = rank_ID[:top_n]
-top_scores = rank_score[:top_n]
+  #reading stuff from h5 file
+  h5f = h5py.File("CNNFeatures.h5",'r')
+  feats = h5f['dataset_1'][:]
+  imgNames = h5f['dataset_2'][:]
+  print(feats)
+  print(imgNames)
+  print(len(imgNames))
 
-# Print matches
-print(f"Top {top_n} matches with similarity scores:")
-for i, (image_id, score) in enumerate(zip(top_matches, top_scores)):
-    image_name = imgNames[image_id].decode('utf-8') if isinstance(imgNames[image_id], bytes) else imgNames[image_id]
-    print(f"{i+1}. Image: {image_name}, Score: {score:.4f}")
+  h5f.close()
+
+
+
+  #compare image feature dataset with user inputed image, return results with >50 similairty
+  
+  model = VGGNet()
+  
+  
+  image = Image.open(queryImg).convert("RGB")
+  query_feat = model.extract_feat(image)
+  print("Extracting features from query image")
+
+  scores = []
+  from scipy import spatial
+  for i in range(feats.shape[0]):
+      score = 1-spatial.distance.cosine(query_feat, feats[i])
+      scores.append(score)
+  scores = np.array(scores)
+  rank_ID = np.argsort(scores)[::-1]
+  rank_score = scores[rank_ID]
+
+  # Get top 3 matches
+  top_n = 3
+  top_matches = rank_ID[:top_n]
+  top_scores = rank_score[:top_n]
+
+  # Print matches
+  results = []
+  print(f"Top {top_n} matches with similarity scores:")
+  for i, (image_id, score) in enumerate(zip(top_matches, top_scores)):
+      image_name = imgNames[image_id].decode('utf-8') if isinstance(imgNames[image_id], bytes) else imgNames[image_id]
+      print(f"{i+1}. Image: {image_name}, Score: {score:.4f}")
+      results.append(image_name)
+
+  print("Results: ", results)
+  return results
