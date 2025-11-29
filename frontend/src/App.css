@@ -1,5 +1,11 @@
 @import "tailwindcss";
-
+@font-face {
+  font-family: "JetBrain-Reg";
+  src: url("/Users/shabichasureshkumar/Desktop/shoplens/frontend/src/assets/JetBrainsMono-Regular.ttf")
+    format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
 .logo {
   @apply top-0 left-10 p-6 absolute;
 }
