@@ -6,6 +6,15 @@
   font-weight: normal;
   font-style: normal;
 }
+
+@font-face {
+  font-family: "JetBrain-Bold";
+  src: url("/Users/shabichasureshkumar/Desktop/shoplens/frontend/src/assets/JetBrainsMonoNL-Bold.ttf")
+    format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
 .logo {
   @apply top-0 left-10 p-6 absolute;
 }
@@ -26,12 +35,9 @@
 }
 
 .Result {
-  @apply top-65 left-10 p-6 absolute text-[#2E2E2E] text-xs font-normal tracking-[0] leading-[normal] w-fit;
+  @apply top-65 left-10 p-6 text-[#2E2E2E] text-xs font-normal tracking-[0] leading-[normal] w-fit;
     font-family: "JetBrains Mono-Regular", Helvetica;
 }
 .image {
-  @apply top-80 left-16  absolute w-50 h-50 outline-solid outline-[#2E2E2E] cursor-pointer ;
-}
-.image:hover {
-  box-shadow:12px 12px 0px #2E2E2E;
+  @apply relative top-30 left-16 w-50 h-50 outline-solid outline-[#2E2E2E] cursor-pointer ;
 }
