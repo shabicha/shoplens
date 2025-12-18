@@ -2,7 +2,7 @@ import upload from '/Users/shabichasureshkumar/Desktop/shoplens/frontend/src/ass
 import './App.css'
 import React, { useRef, useState } from 'react';
 import axios from "axios";
-
+import x from '/Users/shabichasureshkumar/Desktop/shoplens/frontend/src/assets/x.svg'
 const Upload = () => {
     // Create a ref for the file input - triggered by the button click
     const fileInputRef = useRef(null);
@@ -13,6 +13,9 @@ const Upload = () => {
     const handleClick = () => {
         fileInputRef.current.click();
     };
+     const handleReset = () => {
+    setFile(null); // 👈 reset to default state
+  };
 
     // Capture file
     const handleFileChange = async (e) => {
@@ -42,17 +45,40 @@ const Upload = () => {
               style={{ display: "none" }}
               onChange={handleFileChange}
           />
-          <div className="uploadButton" onClick={handleClick}>
-    
-    <div className="uploadText">UPLOAD</div>
-    <img
-    className="uploadLogo"
-    alt="Outline arrows"
-    src={upload}
-    />
-    </div>
-      </>
-  )
-}
+          <div
+        className="uploadButton "
+        onClick={handleClick}
+      >
+
+    {file ? (
+        <div className="flex flex-row gap-48 items-center ">
+          <img
+            src={URL.createObjectURL(file)}
+            alt="Uploaded"
+            className="w-12 h-12 rounded-[2px] object-cover outline-solid outline-[2px] outline-black"
+          />
+
+ <div onClick={handleReset}
+ className="flex flex-col justify-center items-center w-[100px] h-[64px] bg-[#C837AB] border-l-[2px] border-black">
+<img
+className="w-6 h-6"
+src={x}
+/>
+</div>
+
+</div>
+
+          
+        ) : (
+          /* Default state */
+          <div className="flex flex-col items-center">
+            <img src={upload} alt="Upload icon" className="w-6 h-6 mb-1" />
+            <span className="text-sm font-bold">UPLOAD</span>
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
 
 export default Upload

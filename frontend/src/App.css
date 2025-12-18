@@ -20,7 +20,7 @@
 }
 
 .uploadButton {
-  @apply top-44 left-16 p-6 absolute items-center flex justify-between h-[39px] w-[173px] pl-[30px] pr-2.5 py-1 outline-solid outline-[#2E2E2E] cursor-pointer ;
+  @apply bg-[#FFB2EF] rounded-[1.5px] top-44 ml-16 items-center flex justify-between h-[64px] w-[300px] pl-[8px]  outline-solid outline-[2px] outline-[#2E2E2E] cursor-pointer ;
 }
 
 
