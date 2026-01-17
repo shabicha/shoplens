@@ -1,13 +1,16 @@
-#compare cosine similarity + rank
-# VGG16 method to exctract image features
+# VGG16Similarity.py
+# Compare cosine similarity + rank
+# VGG16 method to extract image features
 import numpy as np
 from numpy import linalg as LA
 from tensorflow.keras.applications.vgg16 import VGG16
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.vgg16 import preprocess_input
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-
+import h5py
+from PIL import Image
+import requests
+from io import BytesIO
+from scipy import spatial
 
 
 class VGGNet:
@@ -16,12 +19,16 @@ class VGGNet:
         # pooling: 'max' or 'avg'
         # input_shape: (width, height, 3), width and height should >= 48
         self.input_shape = (224, 224, 3)
-        #weights pre-trained on the ImageNet dataset
+        # weights pre-trained on the ImageNet dataset
         self.weight = 'imagenet'
         self.pooling = 'max'
-        self.model = VGG16(weights = self.weight, input_shape = (self.input_shape[0], self.input_shape[1], self.input_shape[2]), pooling = self.pooling, include_top = False)
-        self.model.predict(np.zeros((1, 224, 224 , 3)))
-
+        self.model = VGG16(
+            weights=self.weight, 
+            input_shape=(self.input_shape[0], self.input_shape[1], self.input_shape[2]), 
+            pooling=self.pooling, 
+            include_top=False
+        )
+        self.model.predict(np.zeros((1, 224, 224, 3)))
 
     '''
     Use vgg16 model to extract features
@@ -29,92 +36,111 @@ class VGGNet:
     '''
     def extract_feat(self, img_path):
         if isinstance(img_path, str):
-          img = image.load_img(img_path, target_size=(self.input_shape[0], self.input_shape[1]))
+            img = image.load_img(img_path, target_size=(self.input_shape[0], self.input_shape[1]))
         else:
-          img = img_path.resize((self.input_shape[0], self.input_shape[1]))
-
-
+            img = img_path.resize((self.input_shape[0], self.input_shape[1]))
 
         img = image.img_to_array(img)
         img = np.expand_dims(img, axis=0)
-        img = preprocess_input(img) # mean-centering, scaling
+        img = preprocess_input(img)  # mean-centering, scaling
         feat = self.model.predict(img)
-        norm_feat = feat[0]/LA.norm(feat[0]) #L2 norm = 1
+        norm_feat = feat[0] / LA.norm(feat[0])  # L2 norm = 1
         return norm_feat
 
-#read images & return features for image database
-import h5py
-import numpy as np
-from PIL import Image
-import requests
-from io import BytesIO
-import os
+
 def rank_similar_images(queryImg, links):
+    """
+    Rank all images by similarity to query image
+    
+    Args:
+        queryImg: PIL Image object
+        links: List of [product_url, image_url, product_name, price]
+    
+    Returns:
+        List of dicts with product_url, image_url, product_name, price, similarity_score
+        Sorted from most similar to least similar
+    """
+    print("\n" + "=" * 60)
+    print("VGG16 RANKING: Starting feature extraction...")
+    print("=" * 60)
+    
     model = VGGNet()
     features = []
-    names = []
     
-    for i in range(len(links)):
-        url = links[i][1]
-        name = links[i][0]
-        
-        # Fetch img from URL
-        response = requests.get(url)
-        img = Image.open(BytesIO(response.content)).convert("RGB")  # ✅ FIX: Use response.content
-        
-        print("Extracting features from image - ", name)
-        vector = model.extract_feat(img)
-
-        features.append(vector)
-        names.append(name)
-
-    # directory for storing extracted features
-    output = "CNNFeatures.h5"
-    print("writing feature extraction results to h5 file")
-
-    h5f = h5py.File(output, 'w')
-    h5f.create_dataset('dataset_1', data=features)
-    h5f.create_dataset('dataset_2', data=np.bytes_(names))
-    h5f.close()
-
-    # Reading from h5 file
-    h5f = h5py.File("CNNFeatures.h5",'r')
-    feats = h5f['dataset_1'][:]
-    imgNames = h5f['dataset_2'][:]
-    print(feats)
-    print(imgNames)
-    print(len(imgNames))
-    h5f.close()
-
-    # Compare image feature dataset with user inputted image
-    query_feat = model.extract_feat(queryImg)  # ✅ This is correct now
-    print("Extracting features from query image")
-
+    print(f"  → Processing {len(links)} product images...")
+    
+    for i, link in enumerate(links):
+        try:
+            product_url = link[0]
+            image_url = link[1]
+            product_name = link[2] if len(link) > 2 else "Unknown Product"
+            price = link[3] if len(link) > 3 else "N/A"
+            
+            # Fetch image from URL
+            print(f"  → [{i+1}/{len(links)}] Fetching: {product_name[:40]}...")
+            response = requests.get(image_url, timeout=10)
+            img = Image.open(BytesIO(response.content)).convert("RGB")
+            
+            # Extract features
+            vector = model.extract_feat(img)
+            features.append(vector)
+            
+        except Exception as e:
+            print(f"  ✗ Error processing image {i+1}: {e}")
+            # Add zero vector for failed images so indices stay aligned
+            features.append(np.zeros(512))  # VGG16 feature size
+    
+    print("✓ Feature extraction complete")
+    
+    # Extract features from query image
+    print("  → Extracting features from query image...")
+    query_feat = model.extract_feat(queryImg)
+    print("✓ Query features extracted")
+    
+    # Calculate similarity scores
+    print("  → Calculating similarity scores...")
     scores = []
-    from scipy import spatial
-    for i in range(feats.shape[0]):
-        score = 1-spatial.distance.cosine(query_feat, feats[i])
+    for i in range(len(features)):
+        score = 1 - spatial.distance.cosine(query_feat, features[i])
         scores.append(score)
     
     scores = np.array(scores)
+    print("✓ Similarity scores calculated")
+    
+    # Rank by similarity (highest to lowest)
     rank_ID = np.argsort(scores)[::-1]
     rank_score = scores[rank_ID]
-
-    # Get top 3 matches
-    top_n = 3
-    top_matches = rank_ID[:top_n]
-    top_scores = rank_score[:top_n]
-
-    # Print matches
+    
+    # Build results with ALL images, ranked
     results = []
-    print(f"Top {top_n} matches with similarity scores:")
-    for i, (image_id, score) in enumerate(zip(top_matches, top_scores)):
-        if isinstance(imgNames[image_id], bytes):
-            image_name = imgNames[image_id].decode('utf-8') 
-        else:
-            image_name = imgNames[image_id]
-        print(f"{i+1}. Image: {image_name}, Score: {score:.4f}")
-        results.append([image_name, links[image_id][1]])
-
-    print("Results: ", results)
+    print("\n📊 Ranking Results:")
+    print("-" * 60)
+    
+    for i, (image_id, score) in enumerate(zip(rank_ID, rank_score)):
+        product_url = links[image_id][0]
+        image_url = links[image_id][1]
+        product_name = links[image_id][2] if len(links[image_id]) > 2 else "Unknown Product"
+        price = links[image_id][3] if len(links[image_id]) > 3 else "N/A"
+        
+        result = {
+            "rank": i + 1,
+            "product_url": product_url,
+            "image_url": image_url,
+            "product_name": product_name,
+            "price": price,
+            "similarity_score": float(score)  # Convert to float for JSON serialization
+        }
+        
+        results.append(result)
+        
+        # Print top 5 for debugging
+        if i < 5:
+            print(f"  {i+1}. {product_name[:40]}")
+            print(f"     Score: {score:.4f} | Price: {price}")
+            print(f"     URL: {product_url[:60]}...")
+    
+    print("-" * 60)
+    print(f"✓ Total results: {len(results)}")
+    print("=" * 60 + "\n")
+    
     return results

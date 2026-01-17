@@ -14,17 +14,17 @@ def get_depop_links(best_colour, best_brand, best_object):
     print("\n" + "=" * 60)
     print("STAGE 3A: Starting Depop scraping...")
     print("=" * 60)
-    
+
     try:
         # Construct search URL
         if best_brand != "no brand":
             search_url = f"https://www.depop.com/search/?q={best_colour}+{best_brand}+{best_object}"
         else:
             search_url = f"https://www.depop.com/search/?q={best_colour}+{best_object}"
-        
+
         print(f"✓ Search URL constructed: {search_url}")
         print("  → Sending request to Scrape.do API...")
-        
+
         api_url = "https://api.scrape.do"
         params = {
             'token': SCRAPE_DO_TOKEN,
@@ -36,28 +36,28 @@ def get_depop_links(best_colour, best_brand, best_object):
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept-Language': 'en-US,en;q=0.9'
         }
-        
+
         response = requests.get(api_url, params=params, headers=headers, timeout=60)
         print(f"✓ Response received: Status {response.status_code}")
-        
+
         if response.status_code != 200:
             print(f"✗ ERROR: API returned status {response.status_code}")
             return []
-        
+
         soup = BeautifulSoup(response.text, "html.parser")
         all_links = soup.find_all("a", href=True)
         print(f"✓ Found {len(all_links)} total anchor tags")
-        
+
         uniqueListing = {}
         links = []
         products_found = 0
-        
+
         for a in soup.find_all("a", href=True):
             if "/products/" in a["href"]:
                 products_found += 1
                 hrefClean = a['href'].strip('\\"')
                 full_url = f"https://www.depop.com{hrefClean}"
-                
+
                 # Extract product name from href (remove /products/ and trailing /, replace - with space)
                 product_name = hrefClean.replace("/products/", "").replace("/", "").replace("-", " ")
                 product_name = " ".join(product_name.split()[1:])
@@ -75,7 +75,7 @@ def get_depop_links(best_colour, best_brand, best_object):
                         price = full_price.get_text(strip=True)
                     elif generic_price:
                         price = generic_price.get_text(strip=True)
-                
+
                 # Find main image
                 img = a.find_all("img", src=True)
                 for i in img:
@@ -87,7 +87,7 @@ def get_depop_links(best_colour, best_brand, best_object):
                                 uniqueID = re.search(r"/b1/(\d+)/", src)
                                 if not uniqueID:
                                     uniqueID = re.search(r"/(\d{8,})", src)
-                                
+
                                 if uniqueID:
                                     uniqueID = uniqueID.group(1)
                                     if uniqueID not in uniqueListing:
@@ -95,11 +95,11 @@ def get_depop_links(best_colour, best_brand, best_object):
                                         srcClean = src.strip('\\"')
                                         links.append([full_url, srcClean, product_name, price])
                                         break
-        
+
         print(f"\n✓ Processing complete")
         print(f"✓ Total products found: {products_found}")
         print(f"✓ Unique listings extracted: {len(links)}")
-        
+
         if len(links) > 0:
             print("\n📦 First 3 results:")
             for i, (url, img, name, price) in enumerate(links[:3]):
@@ -109,9 +109,9 @@ def get_depop_links(best_colour, best_brand, best_object):
                 print(f"     PRICE: {price}")
         else:
             print("\n⚠ WARNING: No listings extracted!")
-        
+
         return links
-        
+
     except requests.exceptions.RequestException as e:
         print(f"\n✗ ERROR: Network/API error: {e}")
         return []
@@ -122,5 +122,3 @@ def get_depop_links(best_colour, best_brand, best_object):
         return []
 
 print("✓ Depop scraper function defined\n")
-
-
