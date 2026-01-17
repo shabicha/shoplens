@@ -11,34 +11,41 @@ CORS(app)
 
 @app.route('/recommend', methods=['POST'])
 def recommend():
-    if 'image' not in request.files:
-        return jsonify({"error": "No image uploaded"}), 400
-
-    file = request.files['image']
-    img_bytes = BytesIO(file.read())
-    
-
     try:
-        # CLIP to classify image (reduce batch size)
-        
-        best_colour, best_brand, best_object = classify_image(img_bytes)
+        if 'image' not in request.files:
+            return jsonify({"error": "No image uploaded"}), 400
 
-        # Scrape Depop products based on CLIP classification
+        file = request.files['image']
+        file_bytes = file.read()
+
+        print("✅ Image received, bytes:", len(file_bytes))
+
+        img = Image.open(BytesIO(file_bytes)).convert("RGB")
+        print("✅ Image loaded")
+
+        print("➡️ Running CLIP...")
+        best_colour, best_brand, best_object = classify_image(img)
+        print("✅ CLIP done:", best_colour, best_brand, best_object)
+
+        print("➡️ Scraping depop...")
         depop_links = get_depop_links(best_colour, best_brand, best_object)
-        print("done scraping depop links")
+        print("✅ Depop scraping done")
 
         if not depop_links:
             return jsonify({"error": "No listings found"}), 404
 
-        # Rank scraped images by VGG16 similarity
-        print("ranking images from app.py")
-        results = rank_similar_images(img_bytes, depop_links)
-        print(f"Results: {results}")
+        print("➡️ Ranking images...")
+        results = rank_similar_images(img, depop_links)
+        print("✅ Ranking done")
 
         return jsonify({"results": results})
 
     except Exception as e:
+        print("🔥 BACKEND ERROR 🔥")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)

@@ -72,8 +72,7 @@ src={x}
         ) : (
           /* Default state */
           <div className="flex flex-col items-center">
-            <img src={upload} alt="Upload icon" className="w-6 h-6 mb-1" />
-            <span className="text-sm font-bold">UPLOAD</span>
+            <span className="text-black text-[13.2px] font-normal w-[160px] leading-normal font-['JetBrain-Reg'] pl-12">UPLOAD</span>
           </div>
         )}
       </div>

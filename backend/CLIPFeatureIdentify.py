@@ -20,8 +20,8 @@ def rank_clip_texts(texts, image):
         similarity = (image_features @ text_features.T).squeeze()
     return texts[similarity.argmax()]
 
-def classify_image(img_bytes):
-    image = preprocess(Image.open(img_bytes).convert("RGB")).unsqueeze(0).to(device)
+def classify_image(pil_image):
+    image = preprocess(pil_image).unsqueeze(0).to(device)
     best_colour = rank_clip_texts(colors, image)
     best_brand = rank_clip_texts(brands, image)
     best_object = rank_clip_texts(objects, image)
